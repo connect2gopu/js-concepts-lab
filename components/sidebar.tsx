@@ -9,6 +9,7 @@ import {
   X,
   Home,
   Play,
+  CheckSquare,
   Sun,
   Moon,
   Monitor,
@@ -126,6 +127,19 @@ export function Sidebar() {
         >
           <Play className="h-4 w-4" />
           Playground
+        </Link>
+        <Link
+          href="/todo"
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            "mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+            pathname === "/todo"
+              ? "bg-accent-light text-accent font-medium"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <CheckSquare className="h-4 w-4" />
+          Todo
         </Link>
       </nav>
 
