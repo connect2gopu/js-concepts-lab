@@ -5,10 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cypress Component Tests</title>
-    <style>
-      /* CSS custom properties mirrored from app/globals.css
-         next-style-loader crashes in Cypress's iframe, so we inline
-         them here instead of importing globals.css in the support file. */
+
+    <!-- Tailwind v4 CDN: scans DOM for classes and generates utility CSS on the fly.
+         Custom theme (@theme inline) and CSS variables mirror app/globals.css exactly. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
       :root {
         --background: #fafafa;
         --foreground: #0a0a0a;
@@ -26,6 +27,44 @@
         --success: #22c55e;
         --warning: #f59e0b;
         --error: #ef4444;
+      }
+
+      .dark {
+        --background: #09090b;
+        --foreground: #fafafa;
+        --card: #18181b;
+        --card-foreground: #fafafa;
+        --muted: #27272a;
+        --muted-foreground: #a1a1aa;
+        --border: #27272a;
+        --accent: #818cf8;
+        --accent-foreground: #ffffff;
+        --accent-light: #1e1b4b;
+        --sidebar-bg: #0f0f12;
+        --sidebar-border: #27272a;
+        --code-bg: #1e1e2e;
+        --success: #4ade80;
+        --warning: #fbbf24;
+        --error: #f87171;
+      }
+
+      @theme inline {
+        --color-background: var(--background);
+        --color-foreground: var(--foreground);
+        --color-card: var(--card);
+        --color-card-foreground: var(--card-foreground);
+        --color-muted: var(--muted);
+        --color-muted-foreground: var(--muted-foreground);
+        --color-border: var(--border);
+        --color-accent: var(--accent);
+        --color-accent-foreground: var(--accent-foreground);
+        --color-accent-light: var(--accent-light);
+        --color-sidebar-bg: var(--sidebar-bg);
+        --color-sidebar-border: var(--sidebar-border);
+        --color-code-bg: var(--code-bg);
+        --color-success: var(--success);
+        --color-warning: var(--warning);
+        --color-error: var(--error);
       }
 
       body {
