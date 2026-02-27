@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cypress Component Tests</title>
+    <style>
+      /* CSS custom properties mirrored from app/globals.css
+         next-style-loader crashes in Cypress's iframe, so we inline
+         them here instead of importing globals.css in the support file. */
+      :root {
+        --background: #fafafa;
+        --foreground: #0a0a0a;
+        --card: #ffffff;
+        --card-foreground: #0a0a0a;
+        --muted: #f4f4f5;
+        --muted-foreground: #71717a;
+        --border: #e4e4e7;
+        --accent: #6366f1;
+        --accent-foreground: #ffffff;
+        --accent-light: #eef2ff;
+        --sidebar-bg: #ffffff;
+        --sidebar-border: #e4e4e7;
+        --code-bg: #f4f4f5;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --error: #ef4444;
+      }
+
+      body {
+        background: var(--background);
+        color: var(--foreground);
+        font-family: system-ui, sans-serif;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-cy-root></div>
+  </body>
+</html>
