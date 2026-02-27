@@ -8,5 +8,6 @@ export default defineConfig({
     },
     specPattern: "cypress/component/**/*.cy.{ts,tsx}",
     supportFile: "cypress/support/component.ts",
+    slowTestThreshold: 500,  // ms — marks tests as slow in the UI
   },
 });
