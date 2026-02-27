@@ -21,42 +21,74 @@ const base = () => BASE.map((t) => ({ ...t }));
 // ─────────────────────────────────────────────────────────────
 describe("addTodoReducer", () => {
   it("appends a new todo with the correct shape", () => {
-    // Arrange
-    const todos = base();
-    // Act
+    const original = base();
+    const originalLength = original.length;
     const newTodo: Todo = {
-      id: "99",
-      text: 'New task',
+      id: '99',
+      text: 'new todo',
       completed: false
-    }
-    const result = addTodoReducer(todos, newTodo.text, newTodo.id);
-    // Assert
-    expect(result).toHaveLength(todos.length + 1);
-    expect(result[result.length - 1]).toEqual({ id: newTodo.id, text: newTodo.text, completed: false });
+    };
+
+    const result = addTodoReducer(original, newTodo.text, newTodo.id);
+
+    const lastTodo = result[result.length-1];
+    expect(result).toHaveLength(originalLength+1);
+    expect(lastTodo).toEqual(newTodo)
+
   });
 
   it("trims leading/trailing whitespace from text", () => {
-    const result = addTodoReducer([], "  Trimmed  ", "1");
-    expect(result[0].text).toBe("Trimmed");
+    let newTask: Todo = {
+      text: '    buy food   ',
+      id: '99',
+      completed: false
+    }
+
+    let original = base();
+    const result = addTodoReducer(original, newTask.text, newTask.id);
+    let lastAddedTask = result[result.length-1];
+
+    expect(lastAddedTask?.text).toBe(newTask.text.trim())
   });
 
   it("does NOT add a todo when text is an empty string", () => {
-    const baseTodos = base();
-    const result = addTodoReducer(baseTodos, "", "99");
-    expect(result).toHaveLength(baseTodos.length);
+    let newTask: Todo = {
+      text: '',
+      id: '99',
+      completed: false
+    }
+
+    let original = base();
+    const result = addTodoReducer(original, newTask.text, newTask.id);
+    
+    expect(result).toHaveLength(original.length)
   });
 
   it("does NOT add a todo when text is only whitespace", () => {
-    const baseTodos = base();
-    const result = addTodoReducer(baseTodos, "   ", "99");
-    expect(result).toHaveLength(baseTodos.length);
+    let newTask: Todo = {
+      text: ' ',
+      id: '99',
+      completed: false
+    }
+
+    let original = base();
+    const result = addTodoReducer(original, newTask.text, newTask.id);
+    
+    expect(result).toHaveLength(original.length)
   });
 
   it("does not mutate the original array", () => {
-    const original = base();
-    const baseLength = original.length;
-    addTodoReducer(original, "Extra", "99");
-    expect(original).toHaveLength(baseLength); // original unchanged
+    let newTask: Todo = {
+      text: 'new tasks',
+      id: '99',
+      completed: false
+    }
+
+    let original = base();
+    let originalLength = original.length;
+    const result = addTodoReducer(original, newTask.text, newTask.id);
+    
+    expect(original).toHaveLength(originalLength)
   });
 });
 
