@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 cypress/screenshots/*
+e2e/todo.spec.ts-snapshots/*.png
