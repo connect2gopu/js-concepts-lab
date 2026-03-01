@@ -48,18 +48,6 @@ test.describe("Todo App — Happy Path", () => {
   });
 });
 
-test.describe("Todo App — Priority Badge", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/todo");
-  });
-
-  test("new todo shows medium priority badge", async ({ page }) => {
-    await page.getByLabel("New todo text").fill("Check priority badge");
-    await page.getByRole("button", { name: "Add" }).click();
-    await expect(page.getByText("medium")).toBeVisible();
-  });
-});
-
 test.describe("Todo App — Edge Cases", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/todo");

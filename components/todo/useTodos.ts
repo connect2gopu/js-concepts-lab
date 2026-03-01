@@ -1,14 +1,13 @@
 import { useState } from "react";
 
-export type Priority = "low" | "medium" | "high";
-export type Todo = { id: string; text: string; completed: boolean; priority: Priority };
+export type Todo = { id: string; text: string; completed: boolean };
 
 // --- Pure reducer functions (testable without React) ---
 
 export function addTodoReducer(todos: Todo[], text: string, id: string): Todo[] {
   const trimmed = text.trim();
   if (!trimmed) return todos;
-  return [...todos, { id, text: trimmed, completed: false, priority: "medium" as Priority }];
+  return [...todos, { id, text: trimmed, completed: false }];
 }
 
 export function toggleTodoReducer(todos: Todo[], id: string): Todo[] {

@@ -2,12 +2,6 @@
 
 import type { Todo } from "./useTodos";
 
-const priorityStyles: Record<string, string> = {
-  low: "bg-green-100 text-green-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  high: "bg-red-100 text-red-700",
-};
-
 interface TodoItemProps {
   todo: Todo;
   onToggle: (id: string) => void;
@@ -32,9 +26,6 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
         }`}
       >
         {todo.text}
-      </span>
-      <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${priorityStyles[todo.priority]}`}>
-        {todo.priority}
       </span>
       <button
         onClick={() => onDelete(todo.id)}
