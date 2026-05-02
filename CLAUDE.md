@@ -61,8 +61,12 @@ Browser
         │     └── [slug]/
         │           └── page.tsx ← Detail page: Statement | Editor | Visual tabs
         ├── todo/page.tsx       ← Full Todo page (testing showcase)
-        ├── playground/page.tsx ← Monaco Editor sandbox
-        └── api/concepts/route.ts ← Shape Factory API (Design Patterns demo)
+        ├── playground/page.tsx ← Monaco Editor sandbox with snippet persistence
+        └── api/
+              ├── concepts/route.ts     ← Shape Factory API (Design Patterns demo)
+              └── snippets/
+                    ├── route.ts            ← GET list / POST save / DELETE snippet files
+                    └── [filename]/route.ts ← GET individual snippet by filename
 
 State
   ├── lib/store.ts        ← Zustand stores (usePipelineStore, useCounterStore)
@@ -74,7 +78,8 @@ Shared
   ├── components/sidebar.tsx ← Nav built from concepts-data.ts and lld-data.ts
   ├── components/lld/visuals/ ← Per-LLD visual components (e.g. calendar-visual.tsx)
   ├── components/ui/tabs.tsx ← Generic tab primitive used by all concept pages
-  └── components/code-demo.tsx ← Syntax-highlighted code block wrapper
+  ├── components/code-demo.tsx ← Syntax-highlighted code block wrapper
+  └── snippets/             ← Persisted user code snippets (saved from Playground; .js/.ts files)
 ```
 
 ## Testing Layers
@@ -95,7 +100,7 @@ Jest config (`jest.config.ts`): uses `ts-jest`, `jest-environment-jsdom`, and re
 ## Key Conventions
 
 - **Adding a new concept**: add an entry to `lib/concepts-data.ts`, create `app/concepts/[slug]/page.tsx` (mark `"use client"`), add demos under `app/concepts/[slug]/demos/`. The Sidebar and home page cards update automatically.
-- **Adding a new LLD item**: add an entry to `lib/lld-data.ts` (id, title, slug, description, problem, icon, color), then create its visual component at `components/lld/visuals/<slug>-visual.tsx` and register it in the `VISUAL_REGISTRY` inside `app/lld/[slug]/page.tsx`. The sidebar and listing page update automatically.
+- **Adding a new LLD item**: add an entry to `lib/lld-data.ts` (id, title, slug, description, problem, icon, color), then create its visual component at `components/lld/visuals/<slug>-visual.tsx` and register it in the `VISUAL_REGISTRY` inside `app/lld/[slug]/page.tsx`. The sidebar and listing page update automatically. Current item: Calendar (id: 24, slug: `24-calendar`).
 - **LLD detail page layout**: three tabs — Statement (markdown problem description), Editor (Monaco + console runner), Visual (interactive React component). The visual registry maps slug → dynamically imported component.
 - **Path alias**: `@/` resolves to the project root (e.g. `@/components/ui/tabs`).
 - **Concept page pattern**: every concept page renders `<Tabs tabs={[{id, label, content: <DemoComponent />}]} />`.
@@ -109,3 +114,5 @@ Jest config (`jest.config.ts`): uses `ts-jest`, `jest-environment-jsdom`, and re
 - **Cypress is excluded from main tsconfig** (`"exclude": ["cypress", "cypress.config.ts"]`); it has its own `cypress/tsconfig.json`.
 - **Playwright expects the dev server running** on port 3000. `playwright.config.ts` sets `reuseExistingServer: true`, so running `npm run dev` first avoids a cold start.
 - **`app/api/concepts/route.ts`** is a real API route (Shape Factory demo) — it is not a test mock, it is used live by the Design Patterns demo page.
+- **Snippet API** (`app/api/snippets/`): `GET /api/snippets` lists saved snippets, `POST` saves a new one, `DELETE` removes one, `GET /api/snippets/[filename]` fetches a single file. Snippets are stored as `.js`/`.ts` files in `snippets/` at the project root. Filenames are validated against `/^[a-zA-Z0-9_-]+\.(js|ts)$/`.
+- **Playground snippet persistence**: `app/playground/page.tsx` uses the snippet API to load/save/delete named code files. The `snippets/` directory is gitignored-by-convention (user data) but currently tracked — do not commit user snippet files.
