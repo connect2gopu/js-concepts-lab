@@ -64,7 +64,7 @@ Browser
         │     └── [slug]/
         │           └── page.tsx ← Detail page: Statement | Editor | Visual tabs
         ├── todo/page.tsx       ← Full Todo page (testing showcase)
-        ├── playground/page.tsx ← Monaco Editor sandbox: run JS/TS, save/load/delete named snippets, collapsible example panel
+        ├── playground/page.tsx ← Monaco Editor sandbox: run JS/TS; collapsible snippet sidebar (save/load/delete/export); Save modal with .js/.ts toggle; language mode follows active snippet extension; example-snippets strip
         ├── error.tsx           ← Global error boundary (Next.js special page)
         ├── loading.tsx         ← Global loading skeleton (Next.js special page)
         ├── not-found.tsx       ← 404 page (Next.js special page)

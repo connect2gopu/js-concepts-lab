@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { Play, Trash2, Copy, Check, Loader2 } from "lucide-react";
+import {
+  Play,
+  Trash2,
+  Copy,
+  Check,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  Download,
+  FileCode,
+  X,
+} from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 
-// Dynamically import Monaco Editor (code splitting demo)
 const MonacoEditor = dynamic(
   () => import("@monaco-editor/react").then((mod) => mod.default),
   {
@@ -76,6 +87,12 @@ const result = numbers
 console.log("Pipeline result:", result);
 `;
 
+const NEW_SNIPPET_TEMPLATE = `// Write your JavaScript / TypeScript here and click Run to execute it.
+// console.log() output appears in the Console panel on the right.
+// Use Save to store this as a .js or .ts file in the snippets/ folder.
+
+`;
+
 const EXAMPLE_SNIPPETS = [
   {
     label: "Closures",
@@ -101,13 +118,13 @@ const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function run() {
   console.log("Starting...");
-  
+
   // Sequential
   await delay(50);
   console.log("Step 1 done");
   await delay(50);
   console.log("Step 2 done");
-  
+
   // Parallel with Promise.all
   const results = await Promise.all([
     delay(30).then(() => "A"),
@@ -115,7 +132,7 @@ async function run() {
     delay(10).then(() => "C"),
   ]);
   console.log("Parallel results:", results);
-  
+
   // Promise.race
   const winner = await Promise.race([
     delay(50).then(() => "slow"),
@@ -132,7 +149,7 @@ run();
     code: `// Observer Pattern
 class EventEmitter {
   #listeners = new Map();
-  
+
   on(event, fn) {
     if (!this.#listeners.has(event)) {
       this.#listeners.set(event, new Set());
@@ -140,11 +157,11 @@ class EventEmitter {
     this.#listeners.get(event).add(fn);
     return () => this.off(event, fn);
   }
-  
+
   off(event, fn) {
     this.#listeners.get(event)?.delete(fn);
   }
-  
+
   emit(event, data) {
     this.#listeners.get(event)?.forEach(fn => fn(data));
   }
@@ -191,12 +208,123 @@ console.log("add(1)(2, 3):", add(1)(2, 3));
   },
 ];
 
+interface SaveModal {
+  open: boolean;
+  name: string;
+  ext: "js" | "ts";
+}
+
 export default function PlaygroundPage() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [output, setOutput] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [copied, setCopied] = useState(false);
   const { resolvedTheme } = useTheme();
+
+  // Snippet management state
+  const [snippets, setSnippets] = useState<string[]>([]);
+  const [activeSnippet, setActiveSnippet] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [saveModal, setSaveModal] = useState<SaveModal>({
+    open: false,
+    name: "",
+    ext: "js",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const saveNameRef = useRef<HTMLInputElement>(null);
+
+  const fetchSnippets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/snippets");
+      const data = await res.json();
+      setSnippets(data.snippets ?? []);
+    } catch {
+      // silently ignore on load
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSnippets();
+  }, [fetchSnippets]);
+
+  // Focus name input when modal opens
+  useEffect(() => {
+    if (saveModal.open) {
+      setTimeout(() => saveNameRef.current?.focus(), 50);
+    }
+  }, [saveModal.open]);
+
+  const newSnippet = useCallback(() => {
+    setCode(NEW_SNIPPET_TEMPLATE);
+    setActiveSnippet(null);
+    setOutput([]);
+  }, []);
+
+  const loadSnippet = useCallback(async (filename: string) => {
+    try {
+      const res = await fetch(`/api/snippets/${encodeURIComponent(filename)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setCode(data.code);
+      setActiveSnippet(filename);
+      setOutput([]);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const saveSnippet = useCallback(async () => {
+    const { name, ext } = saveModal;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const filename = `${trimmed}.${ext}`;
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/snippets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename, code }),
+      });
+      if (res.ok) {
+        await fetchSnippets();
+        setActiveSnippet(filename);
+        setSaveModal({ open: false, name: "", ext: "js" });
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [saveModal, code, fetchSnippets]);
+
+  const deleteSnippet = useCallback(
+    async (filename: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        await fetch("/api/snippets", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename }),
+        });
+        await fetchSnippets();
+        if (activeSnippet === filename) {
+          setActiveSnippet(null);
+        }
+      } catch {
+        // ignore
+      }
+    },
+    [fetchSnippets, activeSnippet]
+  );
+
+  const exportSnippet = useCallback(() => {
+    const filename = activeSnippet ?? "snippet.js";
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [code, activeSnippet]);
 
   const runCode = useCallback(() => {
     setIsRunning(true);
@@ -205,7 +333,6 @@ export default function PlaygroundPage() {
     const logs: string[] = [];
     const originalConsoleLog = console.log;
 
-    // Override console.log to capture output
     console.log = (...args: unknown[]) => {
       const formatted = args
         .map((arg) =>
@@ -217,15 +344,12 @@ export default function PlaygroundPage() {
     };
 
     try {
-      // Create a function from the code and execute it
       const fn = new Function(code);
       const result = fn();
 
-      // Handle async results
       if (result instanceof Promise) {
         result
           .then(() => {
-            // Wait a bit for any pending async logs
             setTimeout(() => {
               console.log = originalConsoleLog;
               setOutput([...logs]);
@@ -239,7 +363,6 @@ export default function PlaygroundPage() {
             setIsRunning(false);
           });
       } else {
-        // Wait for any async operations started in the code
         setTimeout(() => {
           console.log = originalConsoleLog;
           setOutput([...logs]);
@@ -260,19 +383,47 @@ export default function PlaygroundPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const openSaveModal = () => {
+    const baseName = activeSnippet
+      ? activeSnippet.replace(/\.(js|ts)$/, "")
+      : "";
+    const ext = (activeSnippet?.endsWith(".ts") ? "ts" : "js") as "js" | "ts";
+    setSaveModal({ open: true, name: baseName, ext });
+  };
+
+  const editorLanguage =
+    activeSnippet?.endsWith(".ts") ? "typescript" : "javascript";
+
   return (
     <div className="flex h-[calc(100vh-0px)] flex-col px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Playground</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground">Playground</h1>
+            {activeSnippet && (
+              <span className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                <FileCode className="h-3 w-3" />
+                {activeSnippet}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
-            Write and run JavaScript code. The editor is loaded dynamically (code splitting demo).
+            Write and run JavaScript code. Snippets are saved as real files in{" "}
+            <code className="text-xs">snippets/</code>.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={exportSnippet}
+            title="Download as file"
+            className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Download className="h-4 w-4" />
+          </button>
+          <button
             onClick={handleCopy}
+            title="Copy code"
             className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
           >
             {copied ? (
@@ -280,6 +431,14 @@ export default function PlaygroundPage() {
             ) : (
               <Copy className="h-4 w-4" />
             )}
+          </button>
+          <button
+            onClick={openSaveModal}
+            title="Save snippet"
+            className="inline-flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <Save className="h-4 w-4" />
+            Save
           </button>
           <button
             onClick={runCode}
@@ -304,7 +463,10 @@ export default function PlaygroundPage() {
         {EXAMPLE_SNIPPETS.map((snippet) => (
           <button
             key={snippet.label}
-            onClick={() => setCode(snippet.code)}
+            onClick={() => {
+              setCode(snippet.code);
+              setActiveSnippet(null);
+            }}
             className="whitespace-nowrap rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {snippet.label}
@@ -312,76 +474,245 @@ export default function PlaygroundPage() {
         ))}
       </div>
 
-      {/* Editor + Output split */}
-      <div className="flex flex-1 gap-4 overflow-hidden rounded-xl border border-border">
-        {/* Editor */}
-        <div className="flex-1 overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              editor.js
-            </span>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-              dynamic import
-            </span>
-          </div>
-          <MonacoEditor
-            height="100%"
-            defaultLanguage="javascript"
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              fontFamily: "var(--font-geist-mono), monospace",
-              lineNumbers: "on",
-              scrollBeyondLastLine: false,
-              padding: { top: 12 },
-              automaticLayout: true,
-              tabSize: 2,
-              wordWrap: "on",
-            }}
-          />
-        </div>
-
-        {/* Output */}
-        <div className="w-[300px] shrink-0 border-l border-border flex flex-col">
-          <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              Console Output
-            </span>
+      {/* Main area: Sidebar + Editor + Console */}
+      <div className="flex flex-1 gap-0 overflow-hidden rounded-xl border border-border">
+        {/* Snippet Sidebar */}
+        <div
+          className={`flex flex-col border-r border-border bg-card transition-all duration-200 ${
+            isSidebarOpen ? "w-44 min-w-[176px]" : "w-8 min-w-[32px]"
+          }`}
+        >
+          {/* Sidebar header */}
+          <div className="flex items-center justify-between border-b border-border px-2 py-2">
+            {isSidebarOpen && (
+              <span className="text-xs font-medium text-muted-foreground truncate">
+                Snippets
+              </span>
+            )}
             <button
-              onClick={() => setOutput([])}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              className="ml-auto text-muted-foreground hover:text-foreground"
+              title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              {isSidebarOpen ? (
+                <ChevronLeft className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto bg-code-bg p-3 font-mono text-sm">
-            {output.length === 0 ? (
-              <p className="text-muted-foreground italic text-xs">
-                Click &quot;Run&quot; to see output here...
-              </p>
-            ) : (
-              output.map((line, i) => (
-                <div
-                  key={i}
-                  className={`py-0.5 text-xs ${
-                    line.startsWith("Error:")
-                      ? "text-error"
-                      : "text-foreground"
-                  }`}
+
+          {isSidebarOpen && (
+            <>
+              {/* Snippet list */}
+              <div className="flex-1 overflow-y-auto py-1">
+                {snippets.length === 0 ? (
+                  <p className="px-3 py-4 text-[10px] text-muted-foreground italic leading-relaxed">
+                    No snippets yet. Click Save to store your code.
+                  </p>
+                ) : (
+                  snippets.map((filename) => (
+                    <button
+                      key={filename}
+                      onClick={() => loadSnippet(filename)}
+                      className={`group flex w-full items-center justify-between px-3 py-1.5 text-left text-xs transition-colors ${
+                        activeSnippet === filename
+                          ? "bg-accent/20 text-foreground font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <span className="truncate flex-1">{filename}</span>
+                      <span
+                        role="button"
+                        onClick={(e) => deleteSnippet(filename, e)}
+                        className="ml-1 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-error transition-opacity"
+                        title={`Delete ${filename}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* New + Save buttons at bottom */}
+              <div className="border-t border-border p-2 flex flex-col gap-1.5">
+                <button
+                  onClick={newSnippet}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <span className="text-muted-foreground mr-2 select-none">
-                    {">"}
-                  </span>
-                  {line}
-                </div>
-              ))
-            )}
+                  <FileCode className="h-3 w-3" />
+                  New
+                </button>
+                <button
+                  onClick={openSaveModal}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Save className="h-3 w-3" />
+                  Save current
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Editor + Output split */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Editor */}
+          <div className="flex-1 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {activeSnippet ?? "editor.js"}
+              </span>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                dynamic import
+              </span>
+            </div>
+            <MonacoEditor
+              height="100%"
+              defaultLanguage="javascript"
+              language={editorLanguage}
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: "var(--font-geist-mono), monospace",
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                padding: { top: 12 },
+                automaticLayout: true,
+                tabSize: 2,
+                wordWrap: "on",
+              }}
+            />
+          </div>
+
+          {/* Output */}
+          <div className="w-[300px] shrink-0 border-l border-border flex flex-col">
+            <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                Console Output
+              </span>
+              <button
+                onClick={() => setOutput([])}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto bg-code-bg p-3 font-mono text-sm">
+              {output.length === 0 ? (
+                <p className="text-muted-foreground italic text-xs">
+                  Click &quot;Run&quot; to see output here...
+                </p>
+              ) : (
+                output.map((line, i) => (
+                  <div
+                    key={i}
+                    className={`py-0.5 text-xs ${
+                      line.startsWith("Error:")
+                        ? "text-error"
+                        : "text-foreground"
+                    }`}
+                  >
+                    <span className="text-muted-foreground mr-2 select-none">
+                      {">"}
+                    </span>
+                    {line}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Save Modal */}
+      {saveModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-80 rounded-xl border border-border bg-card p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground">
+                Save Snippet
+              </h2>
+              <button
+                onClick={() => setSaveModal({ open: false, name: "", ext: "js" })}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mb-3">
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Name
+              </label>
+              <div className="flex items-center gap-0 overflow-hidden rounded-md border border-border">
+                <input
+                  ref={saveNameRef}
+                  type="text"
+                  value={saveModal.name}
+                  onChange={(e) =>
+                    setSaveModal((m) => ({ ...m, name: e.target.value.replace(/[^a-zA-Z0-9_-]/g, "") }))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSnippet();
+                    if (e.key === "Escape") setSaveModal({ open: false, name: "", ext: "js" });
+                  }}
+                  placeholder="my-snippet"
+                  className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                />
+                <div className="flex border-l border-border">
+                  {(["js", "ts"] as const).map((ext) => (
+                    <button
+                      key={ext}
+                      onClick={() => setSaveModal((m) => ({ ...m, ext }))}
+                      className={`px-2.5 py-2 text-xs font-mono transition-colors ${
+                        saveModal.ext === ext
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      .{ext}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {saveModal.name && (
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Will save as{" "}
+                  <span className="font-mono text-foreground">
+                    snippets/{saveModal.name}.{saveModal.ext}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setSaveModal({ open: false, name: "", ext: "js" })}
+                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveSnippet}
+                disabled={!saveModal.name.trim() || isSaving}
+                className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Save className="h-3 w-3" />
+                )}
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
