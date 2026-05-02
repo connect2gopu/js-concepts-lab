@@ -14,8 +14,10 @@ import {
   Moon,
   Monitor,
   ChevronDown,
+  LayoutTemplate,
 } from "lucide-react";
 import { concepts } from "@/lib/concepts-data";
+import { lldItems } from "@/lib/lld-data";
 import { useTheme } from "./theme-provider";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ export function Sidebar() {
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [conceptsOpen, setConceptsOpen] = useState(true);
+  const [lldOpen, setLldOpen] = useState(true);
 
   const themeOptions = [
     { value: "light" as const, icon: Sun, label: "Light" },
@@ -104,6 +107,58 @@ export function Sidebar() {
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="truncate">{concept.title}</span>
+                  </Link>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* LLD section */}
+        <button
+          onClick={() => setLldOpen(!lldOpen)}
+          className="mt-4 mb-1 flex w-full items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
+          LLD
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 transition-transform",
+              lldOpen && "rotate-180"
+            )}
+          />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {lldOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              {lldItems.map((item) => {
+                const isActive = pathname === `/lld/${item.slug}`;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.slug}
+                    href={`/lld/${item.slug}`}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-accent-light text-accent font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      <span className="mr-1.5 font-mono text-[11px] opacity-60">
+                        #{item.id}
+                      </span>
+                      {item.title}
+                    </span>
                   </Link>
                 );
               })}
