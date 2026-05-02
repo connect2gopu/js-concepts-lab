@@ -41,6 +41,9 @@ npm run e2e
 
 # Playwright with browser visible
 npm run e2e:headed
+
+# Playwright interactive UI mode
+npm run e2e:ui
 ```
 
 ## Architecture
@@ -61,7 +64,10 @@ Browser
         │     └── [slug]/
         │           └── page.tsx ← Detail page: Statement | Editor | Visual tabs
         ├── todo/page.tsx       ← Full Todo page (testing showcase)
-        ├── playground/page.tsx ← Monaco Editor sandbox with snippet persistence
+        ├── playground/page.tsx ← Monaco Editor sandbox: run JS/TS, save/load/delete named snippets, collapsible example panel
+        ├── error.tsx           ← Global error boundary (Next.js special page)
+        ├── loading.tsx         ← Global loading skeleton (Next.js special page)
+        ├── not-found.tsx       ← 404 page (Next.js special page)
         └── api/
               ├── concepts/route.ts     ← Shape Factory API (Design Patterns demo)
               └── snippets/
@@ -79,6 +85,8 @@ Shared
   ├── components/lld/visuals/ ← Per-LLD visual components (e.g. calendar-visual.tsx)
   ├── components/ui/tabs.tsx ← Generic tab primitive used by all concept pages
   ├── components/code-demo.tsx ← Syntax-highlighted code block wrapper
+  ├── lib/utils.ts          ← `cn(...classes)` utility (joins class names, filters falsy values)
+  ├── proxy.ts              ← Unused Next.js middleware draft (see Gotchas)
   └── snippets/             ← Persisted user code snippets (saved from Playground; .js/.ts files)
 ```
 
@@ -116,3 +124,6 @@ Jest config (`jest.config.ts`): uses `ts-jest`, `jest-environment-jsdom`, and re
 - **`app/api/concepts/route.ts`** is a real API route (Shape Factory demo) — it is not a test mock, it is used live by the Design Patterns demo page.
 - **Snippet API** (`app/api/snippets/`): `GET /api/snippets` lists saved snippets, `POST` saves a new one, `DELETE` removes one, `GET /api/snippets/[filename]` fetches a single file. Snippets are stored as `.js`/`.ts` files in `snippets/` at the project root. Filenames are validated against `/^[a-zA-Z0-9_-]+\.(js|ts)$/`.
 - **Playground snippet persistence**: `app/playground/page.tsx` uses the snippet API to load/save/delete named code files. The `snippets/` directory is gitignored-by-convention (user data) but currently tracked — do not commit user snippet files.
+- **`proxy.ts`** at the project root is written as a Next.js middleware (exports `default` + `config.matcher`) but is dead code — Next.js only auto-loads `middleware.ts` at the root. Renaming it would activate the timing/path headers it adds.
+- **Key runtime versions**: Next.js 16.1.6, React 19.2.3. Both are very recent; check release notes before upgrading dependencies.
+- **`react-markdown`** is used in LLD detail pages to render the problem statement (markdown string from `lib/lld-data.ts`). **`framer-motion`** is available for animations in demos.
