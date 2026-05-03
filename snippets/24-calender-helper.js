@@ -33,6 +33,30 @@ console.log(eventHeight(0, 0, 23, 59, TOTAL_HEIGHT));
 console.log(eventHeight(0, 0, 24, 0, TOTAL_HEIGHT)); 
 
 
+// Step 1: Generate the 24 hour labels
+// Expected output:
+// ["12 AM", "1 AM", "2 AM", ..., "11 AM", "12 PM", "1 PM", ..., "11 PM"]
+
+function generateHourLabels() {
+  // your logic here
+
+  let labels = []
+
+  for (let i = 0; i < 24; i++) {
+    let amOrPm = i > 11 ? 'PM' : 'AM';
+
+    let hour = i % 12 
+    let finalHour = hour == 0 ? 12 : hour
+
+    let currLabel = finalHour + ' ' + amOrPm;
+    labels.push(currLabel)
+  }
+
+  return labels
+}
+
+console.log(generateHourLabels());
+
 
 
 

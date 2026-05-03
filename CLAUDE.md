@@ -87,7 +87,8 @@ Shared
   ├── components/code-demo.tsx ← Syntax-highlighted code block wrapper
   ├── lib/utils.ts          ← `cn(...classes)` utility (joins class names, filters falsy values)
   ├── proxy.ts              ← Unused Next.js middleware draft (see Gotchas)
-  └── snippets/             ← Persisted user code snippets (saved from Playground; .js/.ts files)
+  ├── snippets/             ← Persisted user code snippets (saved from Playground; .js/.ts files)
+  └── sessions/             ← Session handoff notes (.md files) for resuming LLD work across conversations
 ```
 
 ## Testing Layers
@@ -123,7 +124,8 @@ Jest config (`jest.config.ts`): uses `ts-jest`, `jest-environment-jsdom`, and re
 - **Playwright expects the dev server running** on port 3000. `playwright.config.ts` sets `reuseExistingServer: true`, so running `npm run dev` first avoids a cold start.
 - **`app/api/concepts/route.ts`** is a real API route (Shape Factory demo) — it is not a test mock, it is used live by the Design Patterns demo page.
 - **Snippet API** (`app/api/snippets/`): `GET /api/snippets` lists saved snippets, `POST` saves a new one, `DELETE` removes one, `GET /api/snippets/[filename]` fetches a single file. Snippets are stored as `.js`/`.ts` files in `snippets/` at the project root. Filenames are validated against `/^[a-zA-Z0-9_-]+\.(js|ts)$/`.
-- **Playground snippet persistence**: `app/playground/page.tsx` uses the snippet API to load/save/delete named code files. The `snippets/` directory is gitignored-by-convention (user data) but currently tracked — do not commit user snippet files.
+- **Playground snippet persistence**: `app/playground/page.tsx` uses the snippet API to load/save/delete named code files. The `snippets/` directory is gitignored-by-convention (user data) but currently tracked — commit snippet files only when they are part of deliberate LLD/concept work (e.g. scratch files for LLD exercises).
+- **Session handoff files**: `sessions/` holds Markdown handoff docs that capture mid-session state for LLD problems (current progress, open questions, resume prompt). Naming convention: `lld-<id>-<slug>.md`. Commit these so context survives across Claude Code sessions.
 - **`proxy.ts`** at the project root is written as a Next.js middleware (exports `default` + `config.matcher`) but is dead code — Next.js only auto-loads `middleware.ts` at the root. Renaming it would activate the timing/path headers it adds.
 - **Key runtime versions**: Next.js 16.1.6, React 19.2.3. Both are very recent; check release notes before upgrading dependencies.
 - **`react-markdown`** is used in LLD detail pages to render the problem statement (markdown string from `lib/lld-data.ts`). **`framer-motion`** is available for animations in demos.
