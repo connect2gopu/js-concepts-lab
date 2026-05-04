@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Interactive learning playground for JavaScript/TypeScript concepts. Each concept (TypeScript, Async Patterns, Design Patterns, Functional Programming, Performance, Data Structures) has its own route with tabbed, live-runnable demos. There is also a full Todo app used as the primary testing target.
+Interactive learning playground for JavaScript/TypeScript concepts. Each concept (TypeScript, Async Patterns, Design Patterns, Functional Programming, Performance, Data Structures, JS Interview Questions) has its own route with tabbed, live-runnable demos. There is also a full Todo app used as the primary testing target.
 
 ## Development Commands
 
@@ -129,3 +129,4 @@ Jest config (`jest.config.ts`): uses `ts-jest`, `jest-environment-jsdom`, and re
 - **`proxy.ts`** at the project root is written as a Next.js middleware (exports `default` + `config.matcher`) but is dead code — Next.js only auto-loads `middleware.ts` at the root. Renaming it would activate the timing/path headers it adds.
 - **Key runtime versions**: Next.js 16.1.6, React 19.2.3. Both are very recent; check release notes before upgrading dependencies.
 - **`react-markdown`** is used in LLD detail pages to render the problem statement (markdown string from `lib/lld-data.ts`). **`framer-motion`** is available for animations in demos.
+- **JS Interview Quiz** (`app/concepts/js-interview/demos/quiz-demo.tsx`): the page description says "AI-generated questions … regenerates via Claude" but the current implementation uses two hard-coded `QUESTION_SETS` that rotate on "Try again" — there is no live Claude API call. The "AI-generated" language describes how the content was authored, not runtime behaviour.

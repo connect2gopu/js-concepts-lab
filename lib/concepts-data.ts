@@ -5,6 +5,7 @@ import {
   FunctionSquare,
   Gauge,
   GitBranch,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -71,5 +72,14 @@ export const concepts: ConceptInfo[] = [
     icon: GitBranch,
     tags: ["Sorting", "Trees", "Linked Lists"],
     color: "from-indigo-500 to-violet-500",
+  },
+  {
+    title: "JS Interview Questions",
+    slug: "js-interview",
+    description:
+      "AI-generated multiple-choice questions on JavaScript fundamentals — closures, event loop, prototypes, scoping, and Promises.",
+    icon: HelpCircle,
+    tags: ["Closures", "Event Loop", "Promises"],
+    color: "from-yellow-500 to-amber-500",
   },
 ];
