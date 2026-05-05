@@ -13,7 +13,8 @@
     "cy:run": "cypress run --component",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
-    "e2e:ui": "playwright test --ui"
+    "e2e:ui": "playwright test --ui",
+    "generate-quiz": "npx tsx scripts/generate-quiz-data.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

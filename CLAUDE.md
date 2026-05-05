@@ -44,6 +44,12 @@ npm run e2e:headed
 
 # Playwright interactive UI mode
 npm run e2e:ui
+
+# Generate quiz question data from README.md (one-time; needs API key)
+# GEMINI_API_KEY=... npm run generate-quiz -- --readme README.md
+# ANTHROPIC_API_KEY=... npm run generate-quiz -- --readme README.md
+# Add --resume to skip already-completed questions (uses checkpoint)
+npm run generate-quiz -- --readme README.md
 ```
 
 ## Architecture
@@ -85,8 +91,12 @@ Shared
   ├── components/lld/visuals/ ← Per-LLD visual components (e.g. calendar-visual.tsx)
   ├── components/ui/tabs.tsx ← Generic tab primitive used by all concept pages
   ├── components/code-demo.tsx ← Syntax-highlighted code block wrapper
-  ├── lib/utils.ts          ← `cn(...classes)` utility (joins class names, filters falsy values)
+  ├── lib/utils.ts                       ← `cn(...classes)` utility (joins class names, filters falsy values)
+  ├── lib/quiz-questions.json            ← Generated MCQ data for JS Interview Quiz (commit after generation)
+  ├── lib/quiz-questions.checkpoint.json ← Intermediate checkpoint for generate-quiz script (do NOT commit)
   ├── proxy.ts              ← Unused Next.js middleware draft (see Gotchas)
+  ├── scripts/
+  │     └── generate-quiz-data.ts ← One-time script: parses README.md → calls Gemini/Anthropic API → writes lib/quiz-questions.json
   ├── snippets/             ← Persisted user code snippets (saved from Playground; .js/.ts files)
   └── sessions/             ← Session handoff notes (.md files) for resuming LLD work across conversations
 ```
@@ -129,4 +139,5 @@ Jest config (`jest.config.ts`): uses `ts-jest`, `jest-environment-jsdom`, and re
 - **`proxy.ts`** at the project root is written as a Next.js middleware (exports `default` + `config.matcher`) but is dead code — Next.js only auto-loads `middleware.ts` at the root. Renaming it would activate the timing/path headers it adds.
 - **Key runtime versions**: Next.js 16.1.6, React 19.2.3. Both are very recent; check release notes before upgrading dependencies.
 - **`react-markdown`** is used in LLD detail pages to render the problem statement (markdown string from `lib/lld-data.ts`). **`framer-motion`** is available for animations in demos.
-- **JS Interview Quiz** (`app/concepts/js-interview/demos/quiz-demo.tsx`): the page description says "AI-generated questions … regenerates via Claude" but the current implementation uses two hard-coded `QUESTION_SETS` that rotate on "Try again" — there is no live Claude API call. The "AI-generated" language describes how the content was authored, not runtime behaviour.
+- **JS Interview Quiz** (`app/concepts/js-interview/demos/quiz-demo.tsx`): currently uses two hard-coded `QUESTION_SETS`. The intent is to replace these with data from `lib/quiz-questions.json` once the `generate-quiz` script completes. When `quiz-questions.json` exists, update `quiz-demo.tsx` to import and use it instead of the static sets. There is no live Claude API call at runtime — generation happens offline via the script.
+- **README.md is source data, not project docs**: the repo README has been replaced with a copy of the greatfrontend "Top JavaScript Interview Questions" reference (hundreds of Q&A entries). `scripts/generate-quiz-data.ts` parses its Markdown tables to extract question slugs and feed them to an AI API. Do not treat it as project documentation.
